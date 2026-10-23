@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistencia Obra</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3E5F1E">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Obra">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23FFF9ED'/%3E%3Cpath d='M50 14c10 0 20 6 22 16-8-2-15 0-22 6-7-6-14-8-22-6 2-10 12-16 22-16z' fill='%235B8C2A'/%3E%3Cg fill='%236A1B9A'%3E%3Ccircle cx='38' cy='44' r='9'/%3E%3Ccircle cx='56' cy='44' r='9'/%3E%3Ccircle cx='47' cy='58' r='9'/%3E%3Ccircle cx='65' cy='58' r='8'/%3E%3Ccircle cx='31' cy='58' r='8'/%3E%3Ccircle cx='40' cy='72' r='8'/%3E%3Ccircle cx='57' cy='72' r='8'/%3E%3Ccircle cx='48' cy='85' r='7'/%3E%3C/g%3E%3C/svg%3E">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+            background: linear-gradient(rgba(20, 30, 10, 0.25), rgba(20, 30, 10, 0.35)), url('fondo_vinedo.jpg') center / cover no-repeat fixed;
+            background-color: #4E5F2A;
+            min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px 0;
+        }
+        .tarjeta {
+            background: #FFF9ED; padding: 50px; border-radius: 20px; box-shadow: 0 15px 35px rgba(60, 20, 0, 0.4);
+            width: 90%; max-width: 700px; text-align: center;
+        }
+        .titulo { font-size: 1.6rem; font-weight: bold; color: #3E5F1E; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
+        .reloj { font-size: 3rem; font-weight: bold; color: #3E2723; margin-bottom: 5px; }
+        .fecha { font-size: 1rem; color: #5D4037; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px; }
+        select {
+            width: 100%; padding: 15px; font-size: 1.1rem; border: 2px solid #ddd; background: white;
+            border-radius: 10px; margin-bottom: 15px; outline: none; transition: border-color 0.3s;
+            cursor: pointer; color: #3E2723;
+        }
+        select:focus { border-color: #DF3A2C; }
+        .etiqueta { display: block; text-align: left; font-size: 0.85rem; font-weight: bold; color: #5D4037; margin-bottom: 6px; text-transform: uppercase; }
+        .contenedor-botones { display: flex; gap: 15px; margin-top: 10px; }
+        button {
+            flex: 1; padding: 15px; font-size: 1.1rem; font-weight: bold; border: none;
+            border-radius: 10px; cursor: pointer; color: white; transition: transform 0.1s, opacity 0.2s;
+        }
+        button:active { transform: scale(0.95); }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.6; cursor: wait; }
+        .btn-entrada { background-color: #388E3C; }
+        .btn-salida { background-color: #DF3A2C; }
+        .mensaje { margin-top: 20px; padding: 15px; border-radius: 10px; font-weight: bold; display: none; }
+        .exito { background-color: #c8e6c9; color: #2e7d32; }
+        .error { background-color: #ffcdd2; color: #d32f2f; }
+        .contadores { display: flex; gap: 20px; margin-bottom: 35px; }
+        .caja {
+            flex: 1; padding: 20px; border-radius: 12px; font-weight: bold; display: flex;
+            justify-content: space-between; align-items: center; font-size: 1.2rem; cursor: pointer; transition: 0.2s;
+        }
+        .caja-sala { background-color: #e8f5e9; color: #388E3C; border: 1px solid #c8e6c9; }
+        .caja-sala:hover { background-color: #c8e6c9; }
+        .caja-fin { background-color: #FFF3E0; color: #DF3A2C; border: 1px solid #FFCCBC; }
+        .caja-fin:hover { background-color: #ffe0b2; }
+        .caja small { display: block; font-size: 0.75rem; font-weight: normal; margin-top: 4px; text-transform: uppercase; }
+        .credito { position: fixed; right: 8px; bottom: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.75); text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+        .credito a { color: inherit; }
+        @media (max-width: 600px) {
+            .tarjeta { padding: 30px 20px; }
+            .contadores, .contenedor-botones { flex-direction: column; gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="tarjeta">
+        <div class="titulo"><i class="fa-solid fa-seedling" style="margin-right: 8px;"></i>Asistencia Obra</div>
+        <div class="reloj" id="reloj">00:00</div>
+        <div class="fecha" id="fecha">Cargando...</div>
+
+        <!-- Contadores visuales -->
+        <div class="contadores">
+            <div class="caja caja-sala" onclick="abrirConsulta('trabajando')" title="Clic para ver detalle">
+                <div style="text-align: left;">
+                    <span><i class="fa-solid fa-user-check" style="margin-right: 8px;"></i> Trabajando</span>
+                    <small><i class="fa-solid fa-hand-pointer"></i> Clic para ver</small>
+                </div>
+                <div>
+                    <span id="num-sala" style="font-size: 2.2rem; line-height: 1;">0</span>
+                    <span>/ <span id="num-total">0</span></span>
+                </div>
+            </div>
+            <div class="caja caja-fin" onclick="abrirConsulta('finalizados')" title="Clic para ver detalle">
+                <div style="text-align: left;">
+                    <span><i class="fa-solid fa-right-from-bracket" style="margin-right: 8px;"></i> Finalizados</span>
+                    <small><i class="fa-solid fa-hand-pointer"></i> Clic para ver</small>
+                </div>
+                <span id="num-salieron" style="font-size: 2.2rem; line-height: 1;">0</span>
+            </div>
+        </div>
+
+        <label class="etiqueta" for="nombre">Empleado</label>
+        <select id="nombre">
+            <option value="none" selected disabled>Selecciona tu nombre...</option>
+        </select>
+
+        <div class="contenedor-botones">
+            <button class="btn-entrada" onclick="marcar('entrada')"><i class="fa-solid fa-arrow-right-to-bracket" style="margin-right: 8px;"></i> ENTRADA</button>
+            <button class="btn-salida" onclick="marcar('salida')"><i class="fa-solid fa-arrow-right-from-bracket" style="margin-right: 8px;"></i> SALIDA</button>
+        </div>
+
+        <div id="notificacion" class="mensaje"></div>
+    </div>
+
+    <!-- Pop-up Dinámico de Consulta -->
+    <div id="modal-consulta" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: #FFF9ED; padding: 30px; border-radius: 15px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: left;">
+            <h3 id="modal-titulo" style="margin-top: 0; border-bottom: 2px solid; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                <i id="modal-icono"></i> <span id="modal-texto-titulo">Personal</span>
+            </h3>
+            <ul id="lista-nombres-sala" style="list-style: none; padding: 0; margin: 20px 0; max-height: 300px; overflow-y: auto; color: #3E2723; font-size: 1.05rem; line-height: 1.6;"></ul>
+            <button type="button" onclick="cerrarConsulta()" style="width: 100%; padding: 12px; background: #DF3A2C; border-radius: 8px; font-size: 1rem;">
+                Cerrar
+            </button>
+        </div>
+    </div>
+
+    <div class="credito">Foto: <a href="https://commons.wikimedia.org/wiki/File:Vi%C3%B1edos_de_Mendoza.jpg" target="_blank" rel="noopener">Viñedos de Mendoza</a> · CC BY-SA 2.0</div>
+
+    <script>
+        // URL de la implementacion de Apps Script (la que termina en /exec)
+        const API_URL = 'PEGAR_URL_EXEC_ACA';
+
+        // Permite instalar la pagina como app en el celular
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+
+        let datosEnSala = [];
+        let datosFinalizados = [];
+
+        function esc(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto == null ? '' : texto;
+            return div.innerHTML;
+        }
+
+        function actualizarReloj() {
+            const ahora = new Date();
+            document.getElementById('reloj').innerText = ahora.toLocaleTimeString('es-AR', {hour: '2-digit', minute: '2-digit'});
+            document.getElementById('fecha').innerText = ahora.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        setInterval(actualizarReloj, 1000);
+        actualizarReloj();
+
+        // Evita que una consulta vieja (lenta) pise los datos de una marcada mas nueva
+        let ultimaMarcada = 0;
+
+        function actualizarPantalla() {
+            const inicio = Date.now();
+            fetch(API_URL)
+                .then(r => r.json())
+                .then(datos => { if (inicio > ultimaMarcada) pintarEstado(datos); })
+                .catch(error => console.error('Error al obtener datos:', error));
+        }
+
+        function pintarEstado(datos) {
+                    document.getElementById('num-sala').innerText = datos.en_sala;
+                    document.getElementById('num-total').innerText = datos.total;
+                    document.getElementById('num-salieron').innerText = datos.ya_salieron;
+
+                    datosEnSala = datos.en_sala_detalle || [];
+                    datosFinalizados = datos.finalizados_detalle || [];
+
+                    const select = document.getElementById('nombre');
+                    const seleccionado = select.value;
+                    select.innerHTML = '<option value="none" selected disabled>Selecciona tu nombre...</option>';
+                    datos.lista.forEach(emp => {
+                        const texto = emp.adentro ? emp.nombre + ' (En Sala)' : emp.nombre;
+                        const attr = emp.nombre === seleccionado ? 'selected' : '';
+                        select.innerHTML += `<option value="${esc(emp.nombre)}" ${attr}>${esc(texto)}</option>`;
+                    });
+
+        }
+        actualizarPantalla();
+        // Refresca cada 30 segundos para ver lo que marcan en otros edificios
+        setInterval(actualizarPantalla, 30000);
+
+        function marcar(tipo) {
+            const nombre = document.getElementById('nombre').value;
+            if (nombre === 'none' || !nombre) {
+                mostrarMensaje('⚠️ Selecciona un nombre primero', 'error');
+                return;
+            }
+            const botones = document.querySelectorAll('.contenedor-botones button');
+            const boton = document.querySelector(tipo === 'entrada' ? '.btn-entrada' : '.btn-salida');
+            const textoBoton = boton.innerHTML;
+            botones.forEach(b => b.disabled = true);
+            boton.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> MARCANDO...';
+            const listo = () => { botones.forEach(b => b.disabled = false); boton.innerHTML = textoBoton; };
+
+            // text/plain para que el navegador no haga la consulta previa (CORS) que Apps Script no responde
+            fetch(API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                body: JSON.stringify({ nombre: nombre, tipo: tipo })
+            })
+                .then(r => r.json())
+                .then(datos => {
+                    listo();
+                    mostrarMensaje(datos.msg, datos.status === 'success' ? 'exito' : 'error');
+                    ultimaMarcada = Date.now();
+                    if (datos.estado) pintarEstado(datos.estado); else actualizarPantalla();
+                })
+                .catch(() => {
+                    listo();
+                    mostrarMensaje('Error de conexión, intenta de nuevo', 'error');
+                });
+        }
+
+        function mostrarMensaje(texto, claseColor) {
+            const notif = document.getElementById('notificacion');
+            notif.innerText = texto;
+            notif.className = `mensaje ${claseColor}`;
+            notif.style.display = 'block';
+            setTimeout(() => { notif.style.display = 'none'; }, 3000);
+        }
+
+        function abrirConsulta(tipo) {
+            const listaModal = document.getElementById('lista-nombres-sala');
+            const titulo = document.getElementById('modal-titulo');
+            const icono = document.getElementById('modal-icono');
+            const textoTitulo = document.getElementById('modal-texto-titulo');
+
+            listaModal.innerHTML = '';
+
+            if (tipo === 'trabajando') {
+                titulo.style.color = '#388E3C';
+                titulo.style.borderBottomColor = '#c8e6c9';
+                icono.className = 'fa-solid fa-users-viewfinder';
+                textoTitulo.innerText = 'Personal Trabajando';
+
+                if (datosEnSala.length > 0) {
+                    datosEnSala.forEach(emp => {
+                        listaModal.innerHTML += `
+                        <li style="padding: 10px 0; border-bottom: 1px dashed #E6CCA5;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span><i class="fa-solid fa-building-user" style="color: #388E3C; margin-right: 8px;"></i> <b>${esc(emp.nombre)}</b></span>
+                                <span style="font-size: 0.9rem; background: #e8f5e9; padding: 4px 10px; border-radius: 12px; color: #2e7d32; border: 1px solid #c8e6c9;">
+                                    <i class="fa-regular fa-clock"></i> Entró: ${esc(emp.entrada)}
+                                </span>
+                            </div>
+                        </li>`;
+                    });
+                } else {
+                    listaModal.innerHTML = '<li style="color: #8D6E63; font-style: italic; text-align: center;"><i class="fa-solid fa-mug-hot"></i> No hay personal trabajando.</li>';
+                }
+            } else if (tipo === 'finalizados') {
+                titulo.style.color = '#DF3A2C';
+                titulo.style.borderBottomColor = '#FFCCBC';
+                icono.className = 'fa-solid fa-right-from-bracket';
+                textoTitulo.innerText = 'Jornadas Finalizadas Hoy';
+
+                if (datosFinalizados.length > 0) {
+                    datosFinalizados.forEach(emp => {
+                        listaModal.innerHTML += `
+                        <li style="padding: 10px 0; border-bottom: 1px dashed #E6CCA5; display: flex; flex-direction: column; gap: 6px;">
+                            <span><i class="fa-solid fa-house-user" style="color: #DF3A2C; margin-right: 8px;"></i> <b>${esc(emp.nombre)}</b></span>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #5D4037; background: #FFF3E0; padding: 6px 10px; border-radius: 8px;">
+                                <span><i class="fa-solid fa-arrow-right-to-bracket" style="color: #388E3C;"></i> Entró: <b>${esc(emp.entrada)}</b></span>
+                                <span><i class="fa-solid fa-arrow-right-from-bracket" style="color: #DF3A2C;"></i> Salió: <b>${esc(emp.salida)}</b></span>
+                            </div>
+                        </li>`;
+                    });
+                } else {
+                    listaModal.innerHTML = '<li style="color: #8D6E63; font-style: italic; text-align: center;"><i class="fa-solid fa-bed"></i> Nadie ha finalizado su jornada aún.</li>';
+                }
+            }
+
+            document.getElementById('modal-consulta').style.display = 'flex';
+        }
+
+        function cerrarConsulta() {
+            document.getElementById('modal-consulta').style.display = 'none';
+        }
+
+    </script>
+</body>
+</html>
