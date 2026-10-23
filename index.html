@@ -30,12 +30,15 @@
         .titulo { font-size: 1.6rem; font-weight: bold; color: #3E5F1E; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
         .reloj { font-size: 3rem; font-weight: bold; color: #3E2723; margin-bottom: 5px; }
         .fecha { font-size: 1rem; color: #5D4037; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px; }
-        select {
+        .campo-dni {
             width: 100%; padding: 15px; font-size: 1.1rem; border: 2px solid #ddd; background: white;
-            border-radius: 10px; margin-bottom: 15px; outline: none; transition: border-color 0.3s;
-            cursor: pointer; color: #3E2723;
+            border-radius: 10px; margin-bottom: 10px; text-align: center; letter-spacing: 3px; font-size: 1.4rem; outline: none; transition: border-color 0.3s;
+            color: #3E2723;
         }
-        select:focus { border-color: #8E2442; }
+        .campo-dni:focus { border-color: #5B7F2B; }
+        .campo-dni::placeholder { letter-spacing: 0; font-size: 1.05rem; color: #9C8F7A; }
+        .recordar { display: flex; align-items: center; gap: 8px; justify-content: center; font-size: 0.9rem; color: #5D4037; margin-bottom: 15px; cursor: pointer; }
+        .recordar input { width: 18px; height: 18px; accent-color: #5B7F2B; }
         .etiqueta { display: block; text-align: left; font-size: 0.85rem; font-weight: bold; color: #5D4037; margin-bottom: 6px; text-transform: uppercase; }
         .contenedor-botones { display: flex; gap: 15px; margin-top: 10px; }
         button {
@@ -95,10 +98,9 @@
             </div>
         </div>
 
-        <label class="etiqueta" for="nombre">Empleado</label>
-        <select id="nombre">
-            <option value="none" selected disabled>Selecciona tu nombre...</option>
-        </select>
+        <label class="etiqueta" for="dni">Tu DNI</label>
+        <input type="text" id="dni" class="campo-dni" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Escribí tu DNI sin puntos">
+        <label class="recordar"><input type="checkbox" id="recordar"> Recordar mi DNI en este celular</label>
 
         <div class="contenedor-botones">
             <button class="btn-entrada" onclick="marcar('entrada')"><i class="fa-solid fa-arrow-right-to-bracket" style="margin-right: 8px;"></i> ENTRADA</button>
@@ -149,6 +151,23 @@
         setInterval(actualizarReloj, 1000);
         actualizarReloj();
 
+        // Recordar el DNI en este celular (solo si la persona lo elige)
+        const campoDni = document.getElementById('dni');
+        const checkRecordar = document.getElementById('recordar');
+        try {
+            const guardado = localStorage.getItem('dni');
+            if (guardado) { campoDni.value = guardado; checkRecordar.checked = true; }
+        } catch (e) {}
+        function guardarDni() {
+            try {
+                if (checkRecordar.checked && campoDni.value) localStorage.setItem('dni', campoDni.value.replace(/\D/g, ''));
+                else localStorage.removeItem('dni');
+            } catch (e) {}
+        }
+        checkRecordar.addEventListener('change', guardarDni);
+        campoDni.addEventListener('change', guardarDni);
+        campoDni.addEventListener('keydown', e => { if (e.key === 'Enter') campoDni.blur(); });
+
         // Evita que una consulta vieja (lenta) pise los datos de una marcada mas nueva
         let ultimaMarcada = 0;
 
@@ -168,30 +187,16 @@
                     datosEnSala = datos.en_sala_detalle || [];
                     datosFinalizados = datos.finalizados_detalle || [];
 
-                    // Solo rearma la lista si cambio algo y nadie la tiene abierta (si no, se cerraba sola)
-                    const select = document.getElementById('nombre');
-                    const firma = JSON.stringify(datos.lista);
-                    if (firma !== select.dataset.firma && document.activeElement !== select) {
-                        select.dataset.firma = firma;
-                        const seleccionado = select.value;
-                        let opciones = '<option value="none" selected disabled>Selecciona tu nombre...</option>';
-                        datos.lista.forEach(emp => {
-                            const texto = emp.adentro ? emp.nombre + ' (En Sala)' : emp.nombre;
-                            const attr = emp.nombre === seleccionado ? 'selected' : '';
-                            opciones += `<option value="${esc(emp.nombre)}" ${attr}>${esc(texto)}</option>`;
-                        });
-                        select.innerHTML = opciones;
-                    }
-
         }
         actualizarPantalla();
         // Refresca cada 30 segundos para ver lo que marcan en otros edificios
         setInterval(actualizarPantalla, 30000);
 
         function marcar(tipo) {
-            const nombre = document.getElementById('nombre').value;
-            if (nombre === 'none' || !nombre) {
-                mostrarMensaje('⚠️ Selecciona un nombre primero', 'error');
+            const dni = document.getElementById('dni').value.replace(/\D/g, '');
+            if (dni.length < 6) {
+                mostrarMensaje('⚠️ Escribí tu DNI', 'error');
+                document.getElementById('dni').focus();
                 return;
             }
             const botones = document.querySelectorAll('.contenedor-botones button');
@@ -205,12 +210,16 @@
             fetch(API_URL, {
                 method: 'POST',
                 headers: {'Content-Type': 'text/plain;charset=utf-8'},
-                body: JSON.stringify({ nombre: nombre, tipo: tipo })
+                body: JSON.stringify({ dni: dni, tipo: tipo })
             })
                 .then(r => r.json())
                 .then(datos => {
                     listo();
                     mostrarMensaje(datos.msg, datos.status === 'success' ? 'exito' : 'error');
+                    // En un celular compartido el DNI se borra despues de marcar
+                    if (datos.status === 'success' && !document.getElementById('recordar').checked) {
+                        document.getElementById('dni').value = '';
+                    }
                     ultimaMarcada = Date.now();
                     if (datos.estado) pintarEstado(datos.estado); else actualizarPantalla();
                 })
