@@ -108,7 +108,7 @@
         </select>
 
         <label class="etiqueta" for="dni">DNI para confirmar</label>
-        <input type="text" id="dni" class="campo-dni" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Escribí tu DNI sin puntos">
+        <input type="text" id="dni" class="campo-dni" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Escribí tu DNI y apretá Enter">
 
         <div class="contenedor-botones">
             <button class="btn-entrada" onclick="marcar('entrada')"><i class="fa-solid fa-arrow-right-to-bracket" style="margin-right: 8px;"></i> ENTRADA</button>
@@ -160,7 +160,10 @@
         actualizarReloj();
 
         const campoDni = document.getElementById('dni');
-        campoDni.addEventListener('keydown', e => { if (e.key === 'Enter') campoDni.blur(); });
+        // Enter despues del DNI: el sistema decide si es entrada o salida
+        campoDni.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); marcar('auto'); }
+        });
 
         // Evita que una consulta vieja (lenta) pise los datos de una marcada mas nueva
         let ultimaMarcada = 0;
@@ -216,7 +219,8 @@
                 return;
             }
             const botones = document.querySelectorAll('.contenedor-botones button');
-            const boton = document.querySelector(tipo === 'entrada' ? '.btn-entrada' : '.btn-salida');
+            // Con Enter (auto) se muestra la espera en el boton de entrada
+            const boton = document.querySelector(tipo === 'salida' ? '.btn-salida' : '.btn-entrada');
             const textoBoton = boton.innerHTML;
             botones.forEach(b => b.disabled = true);
             boton.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> MARCANDO...';
