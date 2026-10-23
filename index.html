@@ -20,7 +20,11 @@
             min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px 0;
         }
         .tarjeta {
-            background: #F8F4EA; padding: 50px; border-radius: 20px; box-shadow: 0 15px 35px rgba(60, 20, 0, 0.4);
+            /* Tono trigo/pergamino, como el viñedo dorado de la foto, con una franja verde vid a bordó vino arriba */
+            background:
+                linear-gradient(90deg, #5B7F2B, #8E2442) top / 100% 8px no-repeat,
+                linear-gradient(180deg, #F7EFDD 0%, #EEE0C3 100%);
+            padding: 50px; border-radius: 20px; box-shadow: 0 20px 45px rgba(30, 20, 5, 0.55);
             width: 90%; max-width: 700px; text-align: center;
         }
         .titulo { font-size: 1.6rem; font-weight: bold; color: #3E5F1E; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
@@ -164,14 +168,20 @@
                     datosEnSala = datos.en_sala_detalle || [];
                     datosFinalizados = datos.finalizados_detalle || [];
 
+                    // Solo rearma la lista si cambio algo y nadie la tiene abierta (si no, se cerraba sola)
                     const select = document.getElementById('nombre');
-                    const seleccionado = select.value;
-                    select.innerHTML = '<option value="none" selected disabled>Selecciona tu nombre...</option>';
-                    datos.lista.forEach(emp => {
-                        const texto = emp.adentro ? emp.nombre + ' (En Sala)' : emp.nombre;
-                        const attr = emp.nombre === seleccionado ? 'selected' : '';
-                        select.innerHTML += `<option value="${esc(emp.nombre)}" ${attr}>${esc(texto)}</option>`;
-                    });
+                    const firma = JSON.stringify(datos.lista);
+                    if (firma !== select.dataset.firma && document.activeElement !== select) {
+                        select.dataset.firma = firma;
+                        const seleccionado = select.value;
+                        let opciones = '<option value="none" selected disabled>Selecciona tu nombre...</option>';
+                        datos.lista.forEach(emp => {
+                            const texto = emp.adentro ? emp.nombre + ' (En Sala)' : emp.nombre;
+                            const attr = emp.nombre === seleccionado ? 'selected' : '';
+                            opciones += `<option value="${esc(emp.nombre)}" ${attr}>${esc(texto)}</option>`;
+                        });
+                        select.innerHTML = opciones;
+                    }
 
         }
         actualizarPantalla();
